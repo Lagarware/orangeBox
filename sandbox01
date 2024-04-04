@@ -1,0 +1,206 @@
+
+import RPi.GPIO as GPIO
+
+import time
+
+import csv
+
+from mpu6050 import mpu6050
+
+# timeString = time.strftime
+
+ 
+
+#### board config
+
+mpu = mpu6050(0x68)
+
+button = 16
+
+led    = 18
+
+pb1 = 10 # Start Stop button chequear no.
+
+pb2 = 15 # Mark Data button chequear no.
+
+ 
+
+#### itinialize variables
+
+start_stop = 0
+
+mark = 0
+
+current_file = ""
+
+#valores de headers de los datos, 0 si es un registro de actividad normal,
+# 1 si es el inicio de un evento
+
+header_reg = 0
+header_mrk = 1
+
+ 
+
+ 
+
+def new_file(): # close current - open new file
+
+    if current_file != "":
+
+        close_file()
+
+    ts = time.strftime("%Y%m%d-%H%M%S")
+
+    current_file = ts+".csv"
+
+    f = open(current_file,"w", newline="")
+    writer = csv.writer(current_file)
+
+ 
+
+def close_file():
+
+    f.close()
+
+ 
+
+def setup(): #gpio set up
+
+    GPIO.setmode(GPIO.BOARD)
+
+    GPIO.setup(pb1, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    GPIO.setup(pb2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    GPIO.setup(led, GPIO.OUT)
+
+ 
+
+def rw_sensor_info():
+
+    accel_data = mpu.get_accel_data()
+
+    print("Acc X : "+str(accel_data['x']))
+
+    print("Acc Y : "+str(accel_data['y']))
+
+    print("Acc Z : "+str(accel_data['z']))
+
+    #writer = csv.writer(current_file)
+
+    writer.writerow([0,accel_data['x'],accel_data['y'],accel_data['z']])
+
+
+def markEvent():
+    writer.writerow([1,0,0,0])
+    toggle_mark()
+
+def toggle_start_stop():
+    start_stop = 1 - start_stop
+    
+def toggle_mark():
+    mark = 1 - mark
+
+   
+
+def read_inputs():
+
+    ss_button = GPIO.input(pb1)
+
+    mk_button = GPIO.input(pb2)
+
+    if ss_button == False:
+
+        toggle_start_stop()
+
+        while GPIO.input(pb1) == False:
+
+                    time.sleep(0.2)
+
+    if mk_button == False:
+
+        mark = 1
+
+        while GPIO.input(pb2) == False:
+
+                    time.sleep(0.2)
+
+
+def sleepTime():
+
+    if start_stop = 0 # idle
+
+        time.sleep(0.5)
+
+    elif mark = 1 # recording and marking
+
+        time.sleep(1)
+
+    else # just recording
+
+        time.sleep(.2)
+
+       
+
+def blinkLed():
+
+    GPIO.output(led, False)
+
+    GPIO.output(led,True)
+
+    sleepTime()
+
+    GPIO.output()
+
+       
+
+def loop():
+
+        new_file() #crea el primer file para la grabacion
+
+        while True:
+
+            read_inputs()
+
+            if start_stop == 1: #si la grabadora esta ON
+
+                rw_sensor_info() # record with 0 as header
+
+                if mark == 1:
+
+                    markEvent() # record with 1 as header (marked)
+
+            else
+                # ojo, hay un problema, sólo la primera vez que entramos aquí con el valor en cero
+                # debo crear un nuevo archivo(next). Las demás veces no.
+                # 
+
+                new_file() #si lo paramos cerramos file y abrimos otro
+
+            blinkLed()
+
+ 
+
+def endprogram():
+
+        close_file()
+
+        GPIO.output(led, False)
+
+        GPIO.cleanup()
+
+        
+
+if __name__ == '__main__':
+
+          setup()
+
+          try:
+
+                 loop()
+
+          except KeyboardInterrupt:
+
+                 print 'keyboard interrupt detected'
+
+                 endprogram()
