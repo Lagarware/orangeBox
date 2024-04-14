@@ -1,0 +1,83 @@
+import RPi.GPIO as GPIO
+
+import time
+
+GPIO.setmode(GPIO.BOARD)
+
+GPIO.setup(17, GPIO.OUT)
+
+#LED is connected to Pin 17
+
+GPIO.setup(18, GPIO.INPUT) 
+
+#PushButton is connected to Pin 18
+
+ledstate = 0
+
+try:
+
+while True:
+
+if GPIO.input (18) == 0 and ledstate == 0:
+
+print ("led is On")
+
+GPIO.output (17, True)
+
+ledstate = 1
+
+time.sleep (0.5)
+
+if GPIO.input (18) == 1 and ledstate == 1:
+
+print ("led is OFF")
+
+GPIO.output (17, False)
+
+ledstate =0
+
+time.sleep(0.5)
+
+finally:
+
+GPIO.cleanup ()
+
+ 
+
+I found out that there are multiple ways for writing python script for led projects with raspberry pi and this depends also on the connection how we are setting up. We can have a different way of connection for push button raspberry pi 3 and LED. Lets see the below circuit diagram for connect push button to raspberry pi in a different way.
+
+
+
+Lets see the below Python program to push button control led with direct connection.
+
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BOARD)
+
+GPIO.setup(17, GPIO.OUT)
+
+#LED is connected to Pin 17
+
+GPIO.setup(18, GPIO.INPUT) 
+
+#PushButton is connected to Pin 18
+
+try:
+
+while True:
+
+button_state = GPIO.input(18)
+if button_state == False:
+
+GPIO.output(17, True)
+print('Button is Pressed and LED is ON')
+time.sleep(0.5)
+
+else:
+
+GPIO.output(17, False)
+
+except:
+
+GPIO.cleanup()
